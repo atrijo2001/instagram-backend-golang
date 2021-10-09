@@ -15,7 +15,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-const connectionString = "mongodb+srv://atrijo:atrijo@cluster0.mnesu.mongodb.net/myFirstDatabase?retryWrites=true&w=majority"
+const connectionString = "mongodb+srv://Sanskrita:sanskrita@cluster0.d0vor.mongodb.net/myFirstDatabase?retryWrites=true&w=majority"
 const dbName = "instagram"
 const col1Name = "user"
 const col2name = "posts"
@@ -69,12 +69,68 @@ func getOneUser(userId string) {
 
 // insert a post
 func insertOnePost(post models.Post) {
-	inserted, err := collection1.InsertOne(context.Background(), post)
+	inserted, err := collection2.InsertOne(context.Background(), post)
 
 	if err != nil {
 		log.Fatal(err)
 	}
 	fmt.Println("Inserted 1 user in db with id: ", inserted.InsertedID)
+}
+
+// get a post
+func getOnePost(postId string) {
+	id, _ := primitive.ObjectIDFromHex(postId)
+	filter := bson.M{"_id": id}
+
+	result := collection2.FindOne(context.Background(), filter)
+	var post bson.M
+	result.Decode(&post)
+
+	fmt.Println("Post details ", result)
+}
+
+//Get all users
+func getAllUsers() []primitive.M {
+	cur, err := collection1.Find(context.Background(), bson.D{})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var users []primitive.M
+
+	for cur.Next(context.Background()) {
+		var user bson.M
+		err := cur.Decode(&user)
+		if err != nil {
+			log.Fatal(err)
+		}
+		users = append(users, user)
+	}
+
+	defer cur.Close(context.Background())
+	return users
+}
+
+//Get all posts
+func getAllPosts() []primitive.M {
+	cur, err := collection2.Find(context.Background(), bson.D{})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var posts []primitive.M
+
+	for cur.Next(context.Background()) {
+		var post bson.M
+		err := cur.Decode(&post)
+		if err != nil {
+			log.Fatal(err)
+		}
+		posts = append(posts, post)
+	}
+
+	defer cur.Close(context.Background())
+	return posts
 }
 
 //Controllers - files
@@ -89,6 +145,16 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(user)
 }
 
+func CreatePost(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Allow-Control-Allow-Methods", "POST")
+
+	var post models.Post
+	_ = json.NewDecoder(r.Body).Decode(&post)
+	insertOnePost(post)
+	json.NewEncoder(w).Encode(post)
+}
+
 func GetAUser(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Allow-Control-Allow-Methods", "GET")
@@ -96,4 +162,26 @@ func GetAUser(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	getOneUser(params["id"])
 	json.NewEncoder(w).Encode(params["id"])
+}
+
+func GetAllUsers(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	allUsers := getAllUsers()
+	json.NewEncoder(w).Encode(allUsers)
+}
+
+func GetAPost(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Allow-Control-Allow-Methods", "GET")
+
+	params := mux.Vars(r)
+	getOnePost(params["id"])
+	json.NewEncoder(w).Encode(params["id"])
+}
+
+func GetAllPosts(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	allPosts := getAllPosts()
+	fmt.Printf("The type of the posts are; %T\n", allPosts)
+	json.NewEncoder(w).Encode(allPosts)
 }
