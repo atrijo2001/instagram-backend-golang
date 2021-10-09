@@ -15,7 +15,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-const connectionString = "mongodb+srv://Sanskrita:sanskrita@cluster0.d0vor.mongodb.net/myFirstDatabase?retryWrites=true&w=majority"
+const connectionString = "INSERT_HERE"
 const dbName = "instagram"
 const col1Name = "user"
 const col2name = "posts"
